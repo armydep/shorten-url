@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 public class ShortenService {
 
     public ShortenResponseBody shorten(String longUrl) {
-        ShortenResponseBody response = new ShortenResponseBody(longUrl, "okey: " + longUrl);
+        ShortenResponseBody response = new ShortenResponseBody();
+        response.setCode("okey: " + longUrl);
+        response.setShortUrl(longUrl);
         return response;
     }
 
@@ -25,6 +27,10 @@ public class ShortenService {
         if (code.equals("zzz")) {
             return null;
         }
-        return new ShortenRecord(13, System.nanoTime());
+
+        ShortenRecord record = new ShortenRecord();
+        record.setClicks(13);
+        record.setCreatedAt(System.nanoTime());
+        return record;
     }
 }

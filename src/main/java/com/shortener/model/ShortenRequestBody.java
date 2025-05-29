@@ -4,5 +4,5 @@ import lombok.Data;
 
 @Data
 public class ShortenRequestBody {
-    private final String url;
+    private String url;
 }

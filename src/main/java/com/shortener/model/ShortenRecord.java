@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class ShortenRecord {
-    private final Integer clicks;
-    private final Long createdAt;
+    private Integer clicks;
+    private Long createdAt;
 }
