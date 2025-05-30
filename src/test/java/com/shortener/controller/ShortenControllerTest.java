@@ -31,7 +31,6 @@ class ShortenControllerTest {
 
     @Test
     void shorten_ValidRequest_ReturnsOk() throws Exception {
-        // Given
         ShortenRequestBody requestBody = new ShortenRequestBody();
         requestBody.setUrl("https://example.com");
 
@@ -40,7 +39,6 @@ class ShortenControllerTest {
 
         when(shortenService.shorten("https://example.com")).thenReturn(responseBody);
 
-        // When & Then
         mockMvc.perform(post("/api/shorten")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestBody)))
@@ -52,13 +50,11 @@ class ShortenControllerTest {
 
     @Test
     void redirect_ValidCode_ReturnsMovedPermanently() throws Exception {
-        // Given
         String code = "abc123";
         String longUrl = "https://example.com";
 
         when(shortenService.getLongUrl(code)).thenReturn(longUrl);
 
-        // When & Then
         mockMvc.perform(get("/{code}", code))
                 .andExpect(status().isMovedPermanently())
                 .andExpect(header().string("Location", longUrl));
@@ -66,31 +62,26 @@ class ShortenControllerTest {
 
     @Test
     void redirect_InvalidCode_ReturnsNotFound() throws Exception {
-        // Given
         String code = "invalid";
 
         when(shortenService.getLongUrl(code)).thenReturn(null);
 
-        // When & Then
         mockMvc.perform(get("/{code}", code))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void redirect_EmptyCode_ReturnsNotFound() throws Exception {
-        // Given
         String code = "";
 
         when(shortenService.getLongUrl(anyString())).thenReturn(null);
 
-        // When & Then
         mockMvc.perform(get("/{code}", code))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void stats_ValidCode_ReturnsOk() throws Exception {
-        // Given
         String code = "abc123";
         ShortenRecord record = new ShortenRecord();
         record.setClicks(12);
@@ -98,7 +89,6 @@ class ShortenControllerTest {
 
         when(shortenService.getStats(code)).thenReturn(record);
 
-        // When & Then
         mockMvc.perform(get("/api/stats/{code}", code))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -108,24 +98,20 @@ class ShortenControllerTest {
 
     @Test
     void stats_InvalidCode_ReturnsNotFound() throws Exception {
-        // Given
         String code = "invalid";
 
         when(shortenService.getStats(code)).thenReturn(null);
 
-        // When & Then
         mockMvc.perform(get("/api/stats/{code}", code))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void stats_EmptyCode_ReturnsNotFound() throws Exception {
-        // Given
         String code = "";
 
         when(shortenService.getStats(anyString())).thenReturn(null);
 
-        // When & Then
         mockMvc.perform(get("/api/stats/{code}", code))
                 .andExpect(status().isNotFound());
     }
