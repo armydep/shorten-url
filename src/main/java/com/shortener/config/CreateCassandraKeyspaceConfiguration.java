@@ -15,7 +15,7 @@ import org.springframework.data.cassandra.core.cql.keyspace.SpecificationBuilder
 import org.springframework.lang.Nullable;
 
 @Configuration
-@Profile("prod")
+@Profile("dev")
 public class CreateCassandraKeyspaceConfiguration extends AbstractCassandraConfiguration implements BeanClassLoaderAware {
     @Value("${spring.cassandra.keyspace-name}")
     private String keySpaceName;
@@ -41,7 +41,7 @@ public class CreateCassandraKeyspaceConfiguration extends AbstractCassandraConfi
 
     @Override
     public String[] getEntityBasePackages() {
-        return new String[]{"com.shortener.model"};
+        return new String[]{"com.shortener.entity"};
     }
 
     @Nullable
