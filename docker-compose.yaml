@@ -1,0 +1,41 @@
+services:
+
+  shorten-url-svc:
+    container_name: shorten-url-svc-ct
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - CASSANDRA_URL=${CASSANDRA_URL}
+      - CASSANDRA_USERNAME=${CASSANDRA_USERNAME}
+      - CASSANDRA_PASSWORD=${CASSANDRA_PASSWORD}
+    depends_on:
+      cassandra-svc:
+        condition: service_healthy
+    networks:
+      - shorten-url-network
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 2
+
+  cassandra-svc:
+    container_name: cassandra-svc-ct
+    image: cassandra:4.1
+    ports:
+      - "9042:9042"
+    environment:
+      - CASSANDRA_USER=${CASSANDRA_USERNAME}
+      - CASSANDRA_PASSWORD=${CASSANDRA_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -u ${CASSANDRA_USERNAME} -p ${CASSANDRA_PASSWORD} -e 'describe keyspaces'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shorten-url-network
+
+networks:
+  shorten-url-network:
+    driver: bridge
+
