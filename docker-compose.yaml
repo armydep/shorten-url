@@ -29,8 +29,8 @@ services:
       - CASSANDRA_PASSWORD=${CASSANDRA_PASSWORD}
     healthcheck:
       test: ["CMD-SHELL", "cqlsh -u ${CASSANDRA_USERNAME} -p ${CASSANDRA_PASSWORD} -e 'describe keyspaces'"]
-      interval: 10s
-      timeout: 5s
+      interval: 20s
+      timeout: 10s
       retries: 5
     networks:
       - shorten-url-network
