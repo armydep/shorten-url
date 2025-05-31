@@ -1,6 +1,6 @@
 package com.shortener.controller;
 
-import com.shortener.model.ShortenRecord;
+import com.shortener.entity.ShortToLong;
 import com.shortener.model.ShortenRequestBody;
 import com.shortener.model.ShortenResponseBody;
 import com.shortener.service.ShortenService;
@@ -39,8 +39,8 @@ public class ShortenController {
     }
 
     @GetMapping(value = "/api/stats/{code}")
-    public ResponseEntity<ShortenRecord> stats(@PathVariable String code) {
-        ShortenRecord record = service.getStats(code);
+    public ResponseEntity<ShortToLong> stats(@PathVariable String code) {
+        ShortToLong record = service.getShortToLongEntry(code, false);
         if (record == null) {
             return ResponseEntity.notFound().build();
         }

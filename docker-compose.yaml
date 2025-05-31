@@ -12,6 +12,8 @@ services:
     depends_on:
       cassandra-svc:
         condition: service_healthy
+      redis-svc:
+        condition: service_started
     networks:
       - shorten-url-network
     deploy:
@@ -28,12 +30,18 @@ services:
       - CASSANDRA_USER=${CASSANDRA_USERNAME}
       - CASSANDRA_PASSWORD=${CASSANDRA_PASSWORD}
     healthcheck:
-      test: ["CMD-SHELL", "cqlsh -u ${CASSANDRA_USERNAME} -p ${CASSANDRA_PASSWORD} -e 'describe keyspaces'"]
+      test: [ "CMD-SHELL", "cqlsh -u ${CASSANDRA_USERNAME} -p ${CASSANDRA_PASSWORD} -e 'describe keyspaces'" ]
       interval: 20s
       timeout: 10s
       retries: 5
     networks:
       - shorten-url-network
+
+  redis-svc:
+    image: redis:7-alpine
+    container_name: redis-svc-ct
+    ports:
+      - "6379:6379"
 
 networks:
   shorten-url-network:

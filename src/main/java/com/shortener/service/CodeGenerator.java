@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import java.security.SecureRandom;
 
 @Service
-public class ShortenUrlAlgo {
+public class CodeGenerator {
     @Autowired
     private LongToShortRepository longRepo;
 

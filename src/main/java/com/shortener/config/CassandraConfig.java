@@ -16,7 +16,7 @@ import org.springframework.lang.Nullable;
 
 @Configuration
 @Profile("dev")
-public class CreateCassandraKeyspaceConfiguration extends AbstractCassandraConfiguration implements BeanClassLoaderAware {
+public class CassandraConfig extends AbstractCassandraConfiguration implements BeanClassLoaderAware {
     @Value("${spring.cassandra.keyspace-name}")
     private String keySpaceName;
     @Value("${spring.cassandra.contact-points}")
