@@ -9,8 +9,6 @@ import org.springframework.data.cassandra.core.mapping.Table;
 public class LongToShort {
     @PrimaryKey
     private String longUrl;
-
     private String shortUrl;
     private Long createdAt;
-    private Long clicksCount;
 }

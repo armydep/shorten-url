@@ -18,7 +18,7 @@ public class CodeGenerator {
 
     private final SecureRandom random = new SecureRandom();
     private final String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    private final Integer CODE_SIZE = 6;
+    private final Integer CODE_SIZE = 8;
 
     public String generate(@NotBlank String longUrl) {
         String code;

@@ -18,7 +18,6 @@ public class RedisConfig {
         RedisTemplate<String, ShortToLong> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
-        // Optional: Set custom serializers (e.g., Jackson)
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
 

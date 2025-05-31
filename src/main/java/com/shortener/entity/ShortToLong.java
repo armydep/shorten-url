@@ -1,6 +1,7 @@
 package com.shortener.entity;
 
 import lombok.Data;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.cassandra.core.mapping.PrimaryKey;
 import org.springframework.data.cassandra.core.mapping.Table;
 
@@ -11,9 +12,9 @@ import java.io.Serializable;
 public class ShortToLong implements Serializable {
     @PrimaryKey
     private String shortUrl;
-
     private String longUrl;
     private Long createdAt;
+    @Transient
     private Long clicksCount;
 
     public void incrementCount() {

@@ -1,16 +1,20 @@
 package com.shortener.service;
 
 
+import com.shortener.entity.ClicksCount;
 import com.shortener.entity.LongToShort;
 import com.shortener.entity.ShortToLong;
 import com.shortener.model.ShortenResponseBody;
+import com.shortener.repository.ClicksCountRepository;
 import com.shortener.repository.LongToShortRepository;
 import com.shortener.repository.ShortToLongRepository;
 import jakarta.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -24,6 +28,9 @@ public class ShortenService {
     @Autowired
     private ShortToLongRepository shortRepo;
 
+    @Autowired
+    private ClicksCountRepository clicksCountRepository;
+
     @Value("${shortener.base-url}")
     private String baseUrl;
 
@@ -32,6 +39,10 @@ public class ShortenService {
 
     @Autowired
     private CacheService cacheService;
+
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
+
 
     public ShortenResponseBody shorten(@NotBlank String longUrl) {
         Optional<LongToShort> existing = longRepo.findById(longUrl);
@@ -46,14 +57,18 @@ public class ShortenService {
         lts.setLongUrl(longUrl);
         lts.setShortUrl(code);
         lts.setCreatedAt(timestamp);
-        lts.setClicksCount(0L);
 
         ShortToLong stl = new ShortToLong();
         stl.setShortUrl(code);
         stl.setLongUrl(longUrl);
         stl.setCreatedAt(timestamp);
-        stl.setClicksCount(0L);
 
+        ClicksCount clicksCount = new ClicksCount();
+//        clicksCount.setCount(-1L);
+        clicksCount.setShortUrl(code);
+
+        clicksCountRepository.incrementCounter(code);
+        clicksCountRepository.decrementCounter(code);
         longRepo.save(lts);
         shortRepo.save(stl);
 
@@ -73,10 +88,17 @@ public class ShortenService {
         log.info("Cached value: {}", cached);
         if (cached == null) {
             Optional<ShortToLong> existing = shortRepo.findById(code);
+            Optional<ClicksCount> existingClicks = clicksCountRepository.findById(code);
             if (existing.isPresent()) {
+                if (existingClicks.isEmpty()) {
+                    return null; //
+                }
+                ClicksCount clicksVal = existingClicks.get();
                 ShortToLong val = existing.get();
+                val.setClicksCount(clicksVal.getCount());
                 if (updateCount) {
                     val.incrementCount();
+                    eventPublisher.publishEvent(val);
                 }
                 cacheService.put(code, val);
                 return val;
@@ -85,8 +107,15 @@ public class ShortenService {
         } else {
             if (updateCount) {
                 cached.incrementCount();
+                eventPublisher.publishEvent(cached);
+                cacheService.put(code, cached);
             }
             return cached;
         }
+    }
+
+    @Transactional
+    public void incrementCounts(ShortToLong event) {
+        clicksCountRepository.incrementCounter(event.getShortUrl());
     }
 }
