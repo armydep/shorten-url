@@ -38,7 +38,7 @@ services:
       - shorten-url-network
 
   redis-svc:
-    image: redis:7-alpine
+    image: redis:7
     container_name: redis-svc-ct
     ports:
       - "6379:6379"
