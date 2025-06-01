@@ -12,3 +12,6 @@ sudo docker compose up --build
 sudo docker exec -it shorten-url-cassandra cqlsh
 sudo docker exec -it shorten-url-redis redis-cli ping
 sudo docker exec -it shorten-url-redis redis-cli
+
+metrics:
+http://localhost:8080/actuator/prometheus
