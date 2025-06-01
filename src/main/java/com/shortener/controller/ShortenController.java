@@ -20,6 +20,15 @@ import java.net.URI;
 public class ShortenController {
     private final ShortenService service;
 
+    /**
+     * Creates a shortened URL for the provided long URL.
+     *
+     * <p>Endpoint: POST /api/shorten</p>
+     *
+     * @param body the request body containing the long URL to shorten.
+     * @return HTTP 200 OK with {@link ShortenResponseBody} containing the short code and shortened URL,
+     *         or HTTP 400 Bad Request if the input is invalid.
+     */
     @PostMapping(value = "/api/shorten", consumes = "application/json")
     public ResponseEntity<ShortenResponseBody> shorten(@RequestBody ShortenRequestBody body) {
         if (isValid(body)) {
@@ -30,6 +39,15 @@ public class ShortenController {
         }
     }
 
+    /**
+     * Redirects to the original long URL corresponding to the provided short code.
+     *
+     * <p>Endpoint: GET /{code}</p>
+     *
+     * @param code the short URL code to resolve.
+     * @return HTTP 301 Moved Permanently with a Location header pointing to the original URL,
+     *         or HTTP 404 Not Found if the code is not recognized.
+     */
     @GetMapping(value = "/{code}")
     public ResponseEntity<Void> redirect(@PathVariable String code) {
         String longUrl = service.getLongUrl(code);
@@ -41,6 +59,16 @@ public class ShortenController {
         return new ResponseEntity<>(headers, HttpStatus.MOVED_PERMANENTLY);
     }
 
+    /**
+     * Retrieves statistics for the given short URL code, such as the original URL,
+     * number of clicks, and creation timestamp.
+     *
+     * <p>Endpoint: GET /api/stats/{code}</p>
+     *
+     * @param code the short URL code to look up.
+     * @return HTTP 200 OK with {@link ShortToLong} details,
+     *         or HTTP 404 Not Found if the code is unknown.
+     */
     @GetMapping(value = "/api/stats/{code}")
     public ResponseEntity<ShortToLong> stats(@PathVariable String code) {
         ShortToLong record = service.getShortToLongEntry(code, false);
@@ -50,6 +78,12 @@ public class ShortenController {
         return ResponseEntity.ok(record);
     }
 
+    /**
+     * Validates that the given request body contains a non-null, non-empty URL.
+     *
+     * @param body the {@link ShortenRequestBody} to validate.
+     * @return true if the URL is valid; false otherwise.
+     */
     public boolean isValid(@NonNull ShortenRequestBody body) {
         return body.getUrl() != null && !body.getUrl().isEmpty();
     }
