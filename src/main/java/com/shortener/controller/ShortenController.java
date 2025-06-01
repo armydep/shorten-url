@@ -22,9 +22,12 @@ public class ShortenController {
 
     @PostMapping(value = "/api/shorten", consumes = "application/json")
     public ResponseEntity<ShortenResponseBody> shorten(@RequestBody ShortenRequestBody body) {
-        validate(body);
-        ShortenResponseBody response = service.shorten(body.getUrl());
-        return ResponseEntity.ok(response);
+        if (isValid(body)) {
+            ShortenResponseBody response = service.shorten(body.getUrl());
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @GetMapping(value = "/{code}")
@@ -47,9 +50,7 @@ public class ShortenController {
         return ResponseEntity.ok(record);
     }
 
-    public void validate(@NonNull ShortenRequestBody body) {
-        /*if (body.getUrl() == null) {
-
-        }*/
+    public boolean isValid(@NonNull ShortenRequestBody body) {
+        return body.getUrl() != null && !body.getUrl().isEmpty();
     }
 }

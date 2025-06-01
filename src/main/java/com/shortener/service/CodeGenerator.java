@@ -3,18 +3,16 @@ package com.shortener.service;
 import com.shortener.repository.LongToShortRepository;
 import com.shortener.repository.ShortToLongRepository;
 import jakarta.validation.constraints.NotBlank;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 
+@RequiredArgsConstructor
 @Service
 public class CodeGenerator {
-    @Autowired
-    private LongToShortRepository longRepo;
-
-    @Autowired
-    private ShortToLongRepository shortRepo;
+    private final LongToShortRepository longRepo;
+    private final ShortToLongRepository shortRepo;
 
     private final SecureRandom random = new SecureRandom();
     private final String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";

@@ -22,23 +22,19 @@ class ShortenControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-
     @MockitoBean
     private ShortenService shortenService;
-
     @Autowired
     private ObjectMapper objectMapper;
 
+
     @Test
-    void shorten_ValidRequest_ReturnsOk() throws Exception {
+    void testShortenOk() throws Exception {
         ShortenRequestBody requestBody = new ShortenRequestBody();
         requestBody.setUrl("https://example.com");
-
         ShortenResponseBody responseBody = new ShortenResponseBody();
         responseBody.setShortUrl("https://short.ly/abc123");
-
         when(shortenService.shorten("https://example.com")).thenReturn(responseBody);
-
         mockMvc.perform(post("/api/shorten")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestBody)))
@@ -47,48 +43,53 @@ class ShortenControllerTest {
                 .andExpect(jsonPath("$.shortUrl").value("https://short.ly/abc123"));
     }
 
+    @Test
+    void testShortenNonValid() throws Exception {
+        ShortenRequestBody requestBody = new ShortenRequestBody();
+        requestBody.setUrl("");
+        ShortenResponseBody responseBody = new ShortenResponseBody();
+        responseBody.setShortUrl("https://short.ly/abc123");
+        when(shortenService.shorten("https://example.com")).thenReturn(responseBody);
+        mockMvc.perform(post("/api/shorten")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isBadRequest());
+    }
+
 
     @Test
-    void redirect_ValidCode_ReturnsMovedPermanently() throws Exception {
+    void testRedirectOk() throws Exception {
         String code = "abc123";
         String longUrl = "https://example.com";
-
         when(shortenService.getLongUrl(code)).thenReturn(longUrl);
-
         mockMvc.perform(get("/{code}", code))
                 .andExpect(status().isMovedPermanently())
                 .andExpect(header().string("Location", longUrl));
     }
 
     @Test
-    void redirect_InvalidCode_ReturnsNotFound() throws Exception {
+    void testRedirectNotFound() throws Exception {
         String code = "invalid";
-
         when(shortenService.getLongUrl(code)).thenReturn(null);
-
         mockMvc.perform(get("/{code}", code))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    void redirect_EmptyCode_ReturnsNotFound() throws Exception {
+    void testRedirectEmptyCode() throws Exception {
         String code = "";
-
         when(shortenService.getLongUrl(anyString())).thenReturn(null);
-
         mockMvc.perform(get("/{code}", code))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    void stats_ValidCode_ReturnsOk() throws Exception {
+    void testStatsOk() throws Exception {
         String code = "abc123";
         ShortToLong record = new ShortToLong();
         record.setClicksCount(12L);
         record.setCreatedAt(1000L);
-
         when(shortenService.getShortToLongEntry(code, false)).thenReturn(record);
-
         mockMvc.perform(get("/api/stats/{code}", code))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -97,22 +98,11 @@ class ShortenControllerTest {
     }
 
     @Test
-    void stats_InvalidCode_ReturnsNotFound() throws Exception {
+    void testStatsNotFound() throws Exception {
         String code = "invalid";
-
         when(shortenService.getShortToLongEntry(code, false)).thenReturn(null);
-
         mockMvc.perform(get("/api/stats/{code}", code))
                 .andExpect(status().isNotFound());
     }
 
-//    @Test
-//    void stats_EmptyCode_ReturnsNotFound() throws Exception {
-//        String code = "";
-//
-//        when(shortenService.getShortToLongEntry(anyString(), false)).thenReturn(null);
-//
-//        mockMvc.perform(get("/api/stats/{code}", code))
-//                .andExpect(status().isNotFound());
-//    }
 }

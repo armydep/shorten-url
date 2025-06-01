@@ -11,7 +11,7 @@ import java.io.Serializable;
 @Data
 public class ShortToLong implements Serializable {
     @PrimaryKey
-    private String shortUrl;
+    private String code;
     private String longUrl;
     private Long createdAt;
     @Transient

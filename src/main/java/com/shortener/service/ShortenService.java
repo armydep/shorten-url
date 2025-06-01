@@ -1,6 +1,7 @@
 package com.shortener.service;
 
 
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.shortener.entity.ClicksCount;
 import com.shortener.entity.LongToShort;
 import com.shortener.entity.ShortToLong;
@@ -9,8 +10,8 @@ import com.shortener.repository.ClicksCountRepository;
 import com.shortener.repository.LongToShortRepository;
 import com.shortener.repository.ShortToLongRepository;
 import jakarta.validation.constraints.NotBlank;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -19,60 +20,62 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.Optional;
 
+@RequiredArgsConstructor
 @Slf4j
 @Service
 public class ShortenService {
-    @Autowired
-    private LongToShortRepository longRepo;
-
-    @Autowired
-    private ShortToLongRepository shortRepo;
-
-    @Autowired
-    private ClicksCountRepository clicksCountRepository;
-
+    private final LongToShortRepository longRepo;
+    private final ShortToLongRepository shortRepo;
+    private final ClicksCountRepository clicksCountRepository;
+    private final CodeGenerator shortenUrlAlgo;
+    private final CacheService cacheService;
+    private final ApplicationEventPublisher eventPublisher;
     @Value("${shortener.base-url}")
     private String baseUrl;
 
-    @Autowired
-    private CodeGenerator shortenUrlAlgo;
-
-    @Autowired
-    private CacheService cacheService;
-
-    @Autowired
-    private ApplicationEventPublisher eventPublisher;
-
+    @VisibleForTesting
+    public void setBaseUrl(String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
 
     public ShortenResponseBody shorten(@NotBlank String longUrl) {
         Optional<LongToShort> existing = longRepo.findById(longUrl);
         if (existing.isPresent()) {
             LongToShort longToShort = existing.get();
-            return new ShortenResponseBody(longToShort.getShortUrl(), longToShort.getLongUrl());
+            ShortenResponseBody body = new ShortenResponseBody();
+            body.setShortUrl(generateShortUrl(baseUrl, longToShort.getCode()));
+            body.setCode(longToShort.getCode());
+            return body;
         }
         String code = shortenUrlAlgo.generate(longUrl);
         long timestamp = Instant.now().getEpochSecond();
 
         LongToShort lts = new LongToShort();
         lts.setLongUrl(longUrl);
-        lts.setShortUrl(code);
+        lts.setCode(code);
         lts.setCreatedAt(timestamp);
 
         ShortToLong stl = new ShortToLong();
-        stl.setShortUrl(code);
+        stl.setCode(code);
         stl.setLongUrl(longUrl);
         stl.setCreatedAt(timestamp);
 
         ClicksCount clicksCount = new ClicksCount();
-//        clicksCount.setCount(-1L);
-        clicksCount.setShortUrl(code);
+        clicksCount.setCode(code);
 
         clicksCountRepository.incrementCounter(code);
         clicksCountRepository.decrementCounter(code);
         longRepo.save(lts);
         shortRepo.save(stl);
 
-        return new ShortenResponseBody(lts.getShortUrl(), lts.getLongUrl());
+        ShortenResponseBody body = new ShortenResponseBody();
+        body.setCode(code);
+        body.setShortUrl(generateShortUrl(baseUrl, code));
+        return body;
+    }
+
+    private String generateShortUrl(String baseUrl, String code) {
+        return baseUrl + "/" + code;
     }
 
     public String getLongUrl(@NotBlank String code) {
@@ -91,7 +94,7 @@ public class ShortenService {
             Optional<ClicksCount> existingClicks = clicksCountRepository.findById(code);
             if (existing.isPresent()) {
                 if (existingClicks.isEmpty()) {
-                    return null; //
+                    return null;
                 }
                 ClicksCount clicksVal = existingClicks.get();
                 ShortToLong val = existing.get();
@@ -116,6 +119,6 @@ public class ShortenService {
 
     @Transactional
     public void incrementCounts(ShortToLong event) {
-        clicksCountRepository.incrementCounter(event.getShortUrl());
+        clicksCountRepository.incrementCounter(event.getCode());
     }
 }

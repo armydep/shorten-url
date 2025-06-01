@@ -11,7 +11,7 @@ import java.io.Serializable;
 @Data
 public class ClicksCount implements Serializable {
     @PrimaryKey
-    private String shortUrl;
+    private String code;
     @CassandraType(type = CassandraType.Name.COUNTER)
     private Long count;
 }
