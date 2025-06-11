@@ -1,6 +1,6 @@
 package com.shortener.async;
 
-import com.shortener.entity.ShortToLong;
+import com.shortener.entity.UrlMapping;
 import com.shortener.service.ShortenService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +16,7 @@ public class IncrementEventListener {
 
     @Async
     @EventListener
-    public void handleIncrementEvent(ShortToLong event) {
+    public void handleIncrementEvent(UrlMapping event) {
         log.info("Increment async event {}: ", event);
         service.incrementCounts(event);
     }

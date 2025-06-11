@@ -2,23 +2,21 @@ package com.shortener.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.shortener.repository.LongToShortRepository;
-import com.shortener.repository.ShortToLongRepository;
+import com.shortener.repository.UrlMappingRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import static org.mockito.Mockito.*;
 
 class CodeGeneratorTest {
 
-    private LongToShortRepository longRepo;
-    private ShortToLongRepository shortRepo;
+    private UrlMappingRepository repository;
     private CodeGenerator codeGenerator;
 
     @BeforeEach
     void setUp() {
-        longRepo = mock(LongToShortRepository.class);
-        shortRepo = mock(ShortToLongRepository.class);
-        codeGenerator = new CodeGenerator(longRepo, shortRepo);
+        repository = mock(UrlMappingRepository.class);
+        codeGenerator = new CodeGenerator(repository);
     }
 
     @Test
@@ -30,19 +28,19 @@ class CodeGeneratorTest {
 
     @Test
     void testGenerateReturnsUniqueCode() {
-        when(shortRepo.existsById(anyString()))
+        when(repository.existsById(anyString()))
                 .thenReturn(true)
                 .thenReturn(false);
         String generatedCode = codeGenerator.generate("https://example.com/test");
         assertNotNull(generatedCode);
-        verify(shortRepo, atLeast(2)).existsById(anyString());
+        verify(repository, atLeast(2)).existsById(anyString());
     }
 
     @Test
     void testGenerateReturnsCodeWhenFirstIsUnique() {
-        when(shortRepo.existsById(anyString())).thenReturn(false);
+        when(repository.existsById(anyString())).thenReturn(false);
         String code = codeGenerator.generate("https://example.com/unique");
         assertNotNull(code);
-        verify(shortRepo, times(1)).existsById(code);
+        verify(repository, times(1)).existsById(code);
     }
 }

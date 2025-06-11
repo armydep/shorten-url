@@ -1,21 +1,17 @@
 package com.shortener.service;
 
 
-import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
-import com.shortener.entity.ClicksCount;
-import com.shortener.entity.LongToShort;
-import com.shortener.entity.ShortToLong;
+import com.mongodb.internal.VisibleForTesting;
+import com.shortener.entity.UrlMapping;
 import com.shortener.model.ShortenResponseBody;
-import com.shortener.repository.ClicksCountRepository;
-import com.shortener.repository.LongToShortRepository;
-import com.shortener.repository.ShortToLongRepository;
+import com.shortener.repository.UrlMappingRepository;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
 
 import java.time.Instant;
 import java.util.Optional;
@@ -24,16 +20,14 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class ShortenService {
-    private final LongToShortRepository longRepo;
-    private final ShortToLongRepository shortRepo;
-    private final ClicksCountRepository clicksCountRepository;
+    private final UrlMappingRepository repository;
     private final CodeGenerator shortenUrlAlgo;
     private final CacheService cacheService;
     private final ApplicationEventPublisher eventPublisher;
     @Value("${shortener.base-url}")
     private String baseUrl;
 
-    @VisibleForTesting
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
     public void setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
     }
@@ -49,34 +43,20 @@ public class ShortenService {
      * @return a response object containing the generated or existing short code and full short URL
      */
     public ShortenResponseBody shorten(@NotBlank String longUrl) {
-        Optional<LongToShort> existing = longRepo.findById(longUrl);
+        Optional<UrlMapping> existing = repository.findByLongUrl(longUrl);
         if (existing.isPresent()) {
-            LongToShort longToShort = existing.get();
+            UrlMapping longToShort = existing.get();
             ShortenResponseBody body = new ShortenResponseBody();
             body.setShortUrl(generateShortUrl(baseUrl, longToShort.getCode()));
             body.setCode(longToShort.getCode());
             return body;
         }
         String code = shortenUrlAlgo.generate(longUrl);
-        long timestamp = Instant.now().getEpochSecond();
-
-        LongToShort lts = new LongToShort();
+        UrlMapping lts = new UrlMapping();
         lts.setLongUrl(longUrl);
         lts.setCode(code);
-        lts.setCreatedAt(timestamp);
-
-        ShortToLong stl = new ShortToLong();
-        stl.setCode(code);
-        stl.setLongUrl(longUrl);
-        stl.setCreatedAt(timestamp);
-
-        ClicksCount clicksCount = new ClicksCount();
-        clicksCount.setCode(code);
-
-        clicksCountRepository.incrementCounter(code);
-        clicksCountRepository.decrementCounter(code);
-        longRepo.save(lts);
-        shortRepo.save(stl);
+        lts.setCreatedAt(Instant.now().getEpochSecond());
+        repository.save(lts);
 
         ShortenResponseBody body = new ShortenResponseBody();
         body.setCode(code);
@@ -94,7 +74,7 @@ public class ShortenService {
      * @return the original long URL, or null if not found
      */
     public String getLongUrl(@NotBlank String code) {
-        ShortToLong cached = getShortToLongEntry(code, true);
+        UrlMapping cached = getShortToLongEntry(code, true);
         if (cached == null) {
             return null;
         }
@@ -117,19 +97,13 @@ public class ShortenService {
      * @param updateCount if {@code true}, increments the click counter and publishes an event asynchronously; otherwise leaves the count unchanged
      * @return the resolved {@link ShortToLong} entity with metadata and click count, or {@code null} if not found
      */
-    public ShortToLong getShortToLongEntry(@NotBlank String code, boolean updateCount) {
-        ShortToLong cached = cacheService.get(code);
+    public UrlMapping getShortToLongEntry(@NotBlank String code, boolean updateCount) {
+        UrlMapping cached = cacheService.get(code);
         log.info("Cached value: {}", cached);
         if (cached == null) {
-            Optional<ShortToLong> existing = shortRepo.findById(code);
-            Optional<ClicksCount> existingClicks = clicksCountRepository.findById(code);
+            Optional<UrlMapping> existing = repository.findByCode(code);
             if (existing.isPresent()) {
-                if (existingClicks.isEmpty()) {
-                    return null;
-                }
-                ClicksCount clicksVal = existingClicks.get();
-                ShortToLong val = existing.get();
-                val.setClicksCount(clicksVal.getCount());
+                UrlMapping val = existing.get();
                 if (updateCount) {
                     val.incrementCount();
                     eventPublisher.publishEvent(val);
@@ -166,8 +140,7 @@ public class ShortenService {
      *
      * @param event the event containing the short URL code to increment
      */
-    @Transactional
-    public void incrementCounts(ShortToLong event) {
-        clicksCountRepository.incrementCounter(event.getCode());
+    public void incrementCounts(UrlMapping event) {
+        repository.save(event);
     }
 }

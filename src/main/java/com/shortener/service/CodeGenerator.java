@@ -1,7 +1,6 @@
 package com.shortener.service;
 
-import com.shortener.repository.LongToShortRepository;
-import com.shortener.repository.ShortToLongRepository;
+import com.shortener.repository.UrlMappingRepository;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -11,8 +10,7 @@ import java.security.SecureRandom;
 @RequiredArgsConstructor
 @Service
 public class CodeGenerator {
-    private final LongToShortRepository longRepo;
-    private final ShortToLongRepository shortRepo;
+    private final UrlMappingRepository repository;
 
     private final SecureRandom random = new SecureRandom();
     private final String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -23,7 +21,7 @@ public class CodeGenerator {
         do {
             code = generateCode();
         }
-        while (shortRepo.existsById(code));
+        while (repository.existsById(code));
         return code;
     }
 

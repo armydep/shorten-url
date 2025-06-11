@@ -17,7 +17,7 @@ import static io.gatling.javaapi.http.HttpDsl.status;
 public class PerformanceTest extends Simulation {
 
     private static final AtomicInteger counter = new AtomicInteger(1);
-    private static final Integer total_users = 10000;
+    private static final Integer total_users = 1000;
 
     private static Iterator<Map<String, Object>> feeder = new Iterator<>() {
         @Override

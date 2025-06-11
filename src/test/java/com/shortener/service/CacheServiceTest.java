@@ -1,6 +1,6 @@
 package com.shortener.service;
 
-import com.shortener.entity.ShortToLong;
+import com.shortener.entity.UrlMapping;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,8 +15,8 @@ import static org.mockito.Mockito.*;
 
 class CacheServiceTest {
 
-    private RedisTemplate<String, ShortToLong> redisTemplate;
-    private ValueOperations<String, ShortToLong> valueOps;
+    private RedisTemplate<String, UrlMapping> redisTemplate;
+    private ValueOperations<String, UrlMapping> valueOps;
     private CacheService cacheService;
     private MeterRegistry meterRegistry;
 
@@ -31,7 +31,7 @@ class CacheServiceTest {
 
     @Test
     void testPutStoresValueInRedis() {
-        ShortToLong entity = new ShortToLong();
+        UrlMapping entity = new UrlMapping();
         String code = "abc123";
         String longUrl = "https://example.com";
         entity.setLongUrl(longUrl);
@@ -42,13 +42,13 @@ class CacheServiceTest {
 
     @Test
     void testGetReturnsValueAndRefreshesTTL() {
-        ShortToLong expected = new ShortToLong();
+        UrlMapping expected = new UrlMapping();
         String code = "abc123";
         String longUrl = "https://example.com";
         expected.setLongUrl(longUrl);
         expected.setCode(code);
         when(valueOps.get("code:abc123")).thenReturn(expected);
-        ShortToLong result = cacheService.get("abc123");
+        UrlMapping result = cacheService.get("abc123");
         assertNotNull(result);
         assertEquals("https://example.com", result.getLongUrl());
         verify(redisTemplate).expire("code:abc123", Duration.ofMinutes(60));
@@ -57,7 +57,7 @@ class CacheServiceTest {
     @Test
     void testGetReturnsNullWhenNotCached() {
         when(valueOps.get("code:missing")).thenReturn(null);
-        ShortToLong result = cacheService.get("missing");
+        UrlMapping result = cacheService.get("missing");
         assertNull(result);
         verify(redisTemplate, never()).expire(anyString(), any());
     }

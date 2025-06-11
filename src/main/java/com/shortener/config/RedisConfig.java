@@ -1,6 +1,6 @@
 package com.shortener.config;
 
-import com.shortener.entity.ShortToLong;
+import com.shortener.entity.UrlMapping;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -14,8 +14,8 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisConfig {
 
     @Bean
-    public RedisTemplate<String, ShortToLong> redisTemplate(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, ShortToLong> template = new RedisTemplate<>();
+    public RedisTemplate<String, UrlMapping> redisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, UrlMapping> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
         template.setKeySerializer(new StringRedisSerializer());

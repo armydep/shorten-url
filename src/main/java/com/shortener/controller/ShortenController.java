@@ -1,6 +1,6 @@
 package com.shortener.controller;
 
-import com.shortener.entity.ShortToLong;
+import com.shortener.entity.UrlMapping;
 import com.shortener.model.ShortenRequestBody;
 import com.shortener.model.ShortenResponseBody;
 import com.shortener.service.ShortenService;
@@ -66,12 +66,12 @@ public class ShortenController {
      * <p>Endpoint: GET /api/stats/{code}</p>
      *
      * @param code the short URL code to look up.
-     * @return HTTP 200 OK with {@link ShortToLong} details,
+     * @return HTTP 200 OK with {@link UrlMapping} details,
      *         or HTTP 404 Not Found if the code is unknown.
      */
     @GetMapping(value = "/api/stats/{code}")
-    public ResponseEntity<ShortToLong> stats(@PathVariable String code) {
-        ShortToLong record = service.getShortToLongEntry(code, false);
+    public ResponseEntity<UrlMapping> stats(@PathVariable String code) {
+        UrlMapping record = service.getShortToLongEntry(code, false);
         if (record == null) {
             return ResponseEntity.notFound().build();
         }

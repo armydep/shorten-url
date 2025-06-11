@@ -1,7 +1,7 @@
 package com.shortener.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.shortener.entity.ShortToLong;
+import com.shortener.entity.UrlMapping;
 import com.shortener.model.ShortenRequestBody;
 import com.shortener.model.ShortenResponseBody;
 import com.shortener.service.ShortenService;
@@ -86,14 +86,14 @@ class ShortenControllerTest {
     @Test
     void testStatsOk() throws Exception {
         String code = "abc123";
-        ShortToLong record = new ShortToLong();
-        record.setClicksCount(12L);
+        UrlMapping record = new UrlMapping();
+        record.setClicks(12L);
         record.setCreatedAt(1000L);
         when(shortenService.getShortToLongEntry(code, false)).thenReturn(record);
         mockMvc.perform(get("/api/stats/{code}", code))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.clicksCount").value(12))
+                .andExpect(jsonPath("$.clicks").value(12))
                 .andExpect(jsonPath("$.createdAt").value(1000L));
     }
 

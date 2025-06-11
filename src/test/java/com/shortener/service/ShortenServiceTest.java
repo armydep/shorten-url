@@ -1,12 +1,8 @@
 package com.shortener.service;
 
-import com.shortener.entity.ClicksCount;
-import com.shortener.entity.LongToShort;
-import com.shortener.entity.ShortToLong;
+import com.shortener.entity.UrlMapping;
 import com.shortener.model.ShortenResponseBody;
-import com.shortener.repository.ClicksCountRepository;
-import com.shortener.repository.LongToShortRepository;
-import com.shortener.repository.ShortToLongRepository;
+import com.shortener.repository.UrlMappingRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationEventPublisher;
@@ -18,9 +14,7 @@ import static org.mockito.Mockito.*;
 
 class ShortenServiceTest {
 
-    private LongToShortRepository longRepo;
-    private ShortToLongRepository shortRepo;
-    private ClicksCountRepository clicksRepo;
+    private UrlMappingRepository repository;
     private CodeGenerator generator;
     private CacheService cacheService;
     private ApplicationEventPublisher eventPublisher;
@@ -30,25 +24,23 @@ class ShortenServiceTest {
 
     @BeforeEach
     void setUp() {
-        longRepo = mock(LongToShortRepository.class);
-        shortRepo = mock(ShortToLongRepository.class);
-        clicksRepo = mock(ClicksCountRepository.class);
+        repository = mock(UrlMappingRepository.class);
         generator = mock(CodeGenerator.class);
         cacheService = mock(CacheService.class);
         eventPublisher = mock(ApplicationEventPublisher.class);
 
-        shortenService = new ShortenService(longRepo, shortRepo, clicksRepo, generator, cacheService, eventPublisher);
+        shortenService = new ShortenService(repository, generator, cacheService, eventPublisher);
         shortenService.setBaseUrl(BASE_URL);
     }
 
     @Test
     void testShortenReturnsExistingMappingIfExists() {
-        LongToShort existing = new LongToShort();
+        UrlMapping urlMapping = new UrlMapping();
         String code = "abc123";
         String longUrl = "https://example.com";
-        existing.setCode(code);
-        existing.setLongUrl(longUrl);
-        when(longRepo.findById(longUrl)).thenReturn(Optional.of(existing));
+        urlMapping.setCode(code);
+        urlMapping.setLongUrl(longUrl);
+        when(repository.findByLongUrl(longUrl)).thenReturn(Optional.of(urlMapping));
         ShortenResponseBody result = shortenService.shorten(longUrl);
         assertEquals(code, result.getCode());
         assertEquals(generateShortUrl(BASE_URL, code), result.getShortUrl());
@@ -59,22 +51,19 @@ class ShortenServiceTest {
     void testShortenCreatesNewMapping() {
         String code = "xyz789";
         String longUrl = "https://new.com";
-        when(longRepo.findById(anyString())).thenReturn(Optional.empty());
+        when(repository.findById(anyString())).thenReturn(Optional.empty());
         when(generator.generate(anyString())).thenReturn(code);
         ShortenResponseBody result = shortenService.shorten(longUrl);
         assertEquals(code, result.getCode());
         assertEquals(generateShortUrl(BASE_URL, code), result.getShortUrl());
-        verify(clicksRepo).incrementCounter(code);
-        verify(clicksRepo).decrementCounter(code);
-        verify(longRepo).save(any(LongToShort.class));
-        verify(shortRepo).save(any(ShortToLong.class));
+        verify(repository).save(any(UrlMapping.class));
     }
 
     @Test
     void testGetLongUrlReturnsFromCache() {
         String code = "abc123";
         String longUrl = "https://example.com";
-        ShortToLong cached = new ShortToLong();
+        UrlMapping cached = new UrlMapping();
         cached.setCode(code);
         cached.setLongUrl(longUrl);
         when(cacheService.get(code)).thenReturn(cached);
@@ -89,24 +78,21 @@ class ShortenServiceTest {
         String code = "abc123";
         String longUrl = "https://example.com";
         when(cacheService.get(code)).thenReturn(null);
-        ShortToLong entity = new ShortToLong();
+        UrlMapping entity = new UrlMapping();
         entity.setCode(code);
         entity.setLongUrl(longUrl);
-        ClicksCount count = new ClicksCount();
-        count.setCode(code);
-        count.setCount(5L);
-        when(shortRepo.findById(code)).thenReturn(Optional.of(entity));
-        when(clicksRepo.findById(code)).thenReturn(Optional.of(count));
+        entity.setClicks(5L);
+        when(repository.findById(code)).thenReturn(Optional.of(entity));
         String result = shortenService.getLongUrl(code);
         assertEquals(longUrl, result);
-        verify(cacheService).put(eq(code), any(ShortToLong.class));
-        verify(eventPublisher).publishEvent(any(ShortToLong.class));
+        verify(cacheService).put(eq(code), any(UrlMapping.class));
+        verify(eventPublisher).publishEvent(any(UrlMapping.class));
     }
 
     @Test
     void testGetLongUrlReturnsNullWhenNotFound() {
         when(cacheService.get("missing")).thenReturn(null);
-        when(shortRepo.findById("missing")).thenReturn(Optional.empty());
+        when(repository.findById("missing")).thenReturn(Optional.empty());
         String result = shortenService.getLongUrl("missing");
         assertNull(result);
     }
