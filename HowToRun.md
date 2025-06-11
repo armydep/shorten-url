@@ -8,11 +8,11 @@
 
 ## 🚀 How to Run the Service
 
-### Option 1: Run Redis and Cassandra separately, then start Spring Boot app
+### Option 1: Run Redis and Mongo separately, then start Spring Boot app
 
-1. Start the Cassandra container (and wait about 1 minute for it to finish initializing):
+1. Start the Mongo container:
    ```bash
-   sudo docker run --name shorten-url-cassandra -d -p 9042:9042 cassandra:4.1
+   sudo docker run -d -p 27017:27017 --name=mongo -e MONGO_INITDB_ROOT_USERNAME=root -e MONGO_INITDB_ROOT_PASSWORD=password -e MONGO_INITDB_DATABASE=shorten_mongodb mongo:latest
    ```
 
 2. Start the Redis container:
@@ -55,6 +55,11 @@ This will spin up all services: Redis, Cassandra, and the Spring Boot applicatio
 
 ## 🐚 Useful Commands
 
+- Access Mongo container:
+  ```bash
+  sudo docker exec -it shorten-url-mongo mongosh -u root -p password
+  ```
+  
 - Access Cassandra container:
   ```bash
   sudo docker exec -it shorten-url-cassandra cqlsh

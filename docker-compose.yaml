@@ -6,13 +6,14 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - CASSANDRA_URL=${CASSANDRA_URL}
-      - CASSANDRA_USERNAME=${CASSANDRA_USERNAME}
-      - CASSANDRA_PASSWORD=${CASSANDRA_PASSWORD}
+      - MONGO_USERNAME=${MONGO_USERNAME}
+      - MONGO_PASSWORD=${MONGO_PASSWORD}
+      - MONGO_DATABASE=${MONGO_DATABASE}
+      - MONGO_DATABASE_URL=${MONGO_DATABASE_URL}
       - REDIS_URL=${REDIS_URL}
     depends_on:
-      cassandra-svc:
-        condition: service_healthy
+      mongo-svc:
+        condition: service_started
       redis-svc:
         condition: service_started
     networks:
@@ -22,19 +23,14 @@ services:
         condition: on-failure
         max_attempts: 2
 
-  cassandra-svc:
-    container_name: cassandra-svc-ct
-    image: cassandra:4.1
+  mongo-svc:
+    container_name: mongo-svc-ct
+    image: mongo:6.0
     ports:
-      - "9042:9042"
+      - "27017:27017"
     environment:
-      - CASSANDRA_USER=${CASSANDRA_USERNAME}
-      - CASSANDRA_PASSWORD=${CASSANDRA_PASSWORD}
-    healthcheck:
-      test: [ "CMD-SHELL", "cqlsh -u ${CASSANDRA_USERNAME} -p ${CASSANDRA_PASSWORD} -e 'describe keyspaces'" ]
-      interval: 20s
-      timeout: 10s
-      retries: 5
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
     networks:
       - shorten-url-network
 
